@@ -280,7 +280,7 @@ class GMOCoin(object):
         }
         return self._request('GET', '/v1/positionSummary', payload, auth=True)
 
-    def order(self, symbol, side, executionType, size, price=None):
+    def order(self, symbol, side, executionType, size, price=None, timeInForce=''):
         """
         注文
 
@@ -307,6 +307,7 @@ class GMOCoin(object):
             'executionType': executionType, 
             'price': price, 
             'size': size, 
+            'timeInForce': timeInForce,
         }
         return self._request('POST', '/v1/order', payload, auth=True)
 
