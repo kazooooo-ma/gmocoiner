@@ -1,0 +1,10 @@
+name: backtest-smoke
+on:
+  pull_request:
+    branches: [master]
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo ok
