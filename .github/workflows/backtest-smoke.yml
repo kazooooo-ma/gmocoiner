@@ -24,7 +24,7 @@ jobs:
           ls -lh external/jpx/data/raw/train
       - name: Run locked holdout
         run: |
-          python backtest_v52/run_backtest.py --data-dir external/jpx/data/raw/train --out-dir artifacts/v52
+          python backtest_v52/run_wrapper.py --data-dir external/jpx/data/raw/train --out-dir artifacts/v52
       - name: Upload results
         uses: actions/upload-artifact@v4
         with:
