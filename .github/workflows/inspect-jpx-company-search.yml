@@ -4,6 +4,7 @@ on:
     branches: [master]
     paths:
       - 'backtest_v52/inspect_jpx_company_search.sh'
+      - 'backtest_v52/inspect_jpx_company_search_forms.py'
       - '.github/workflows/inspect-jpx-company-search.yml'
 jobs:
   inspect:
@@ -13,3 +14,4 @@ jobs:
       - uses: actions/checkout@v4
       - run: python -m pip install beautifulsoup4 requests
       - run: bash backtest_v52/inspect_jpx_company_search.sh
+      - run: python backtest_v52/inspect_jpx_company_search_forms.py
