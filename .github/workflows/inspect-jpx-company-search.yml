@@ -6,6 +6,7 @@ on:
       - 'backtest_v52/inspect_jpx_company_search.sh'
       - 'backtest_v52/inspect_jpx_company_search_forms.py'
       - 'backtest_v52/inspect_jpx_www2.py'
+      - 'backtest_v52/test_jpx_search.py'
       - '.github/workflows/inspect-jpx-company-search.yml'
 jobs:
   inspect:
@@ -17,3 +18,4 @@ jobs:
       - run: bash backtest_v52/inspect_jpx_company_search.sh
       - run: python backtest_v52/inspect_jpx_company_search_forms.py
       - run: python backtest_v52/inspect_jpx_www2.py
+      - run: python backtest_v52/test_jpx_search.py
