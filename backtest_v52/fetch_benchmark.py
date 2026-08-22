@@ -19,7 +19,7 @@ if (prices['SecuritiesCode'] == 1306).any():
 stock_dates = set(prices.loc[prices['SecuritiesCode'].ne(1306) & prices['Close'].notna(), 'Date'].dropna().dt.normalize())
 
 raw = yf.download(
-    '1306.T', start='2019-01-01', end='2021-12-06',
+    '1306.T', start='2017-01-01', end='2022-06-25',
     auto_adjust=False, actions=True, progress=False, threads=False,
 )
 if raw.empty:
