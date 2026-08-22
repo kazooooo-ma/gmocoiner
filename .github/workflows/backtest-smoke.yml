@@ -25,6 +25,9 @@ jobs:
       - name: Append TOPIX ETF benchmark
         run: |
           python backtest_v52/fetch_benchmark.py --price-file external/jpx/data/raw/train/stock_prices.csv
+      - name: Diagnose point-in-time coverage
+        run: |
+          python backtest_v52/diagnose_data.py --data-dir external/jpx/data/raw/train
       - name: Run locked holdout
         run: |
           python backtest_v52/run_wrapper.py --data-dir external/jpx/data/raw/train --out-dir artifacts/v52
