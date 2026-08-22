@@ -10,6 +10,7 @@ on:
       - 'backtest_v52/test_jpx_detail.py'
       - 'backtest_v52/test_jpx_direct_detail.py'
       - 'backtest_v52/inspect_ixbrl.py'
+      - 'backtest_v52/inspect_revision_row.py'
       - '.github/workflows/inspect-jpx-company-search.yml'
 jobs:
   inspect:
@@ -25,3 +26,4 @@ jobs:
       - run: python backtest_v52/test_jpx_detail.py
       - run: python backtest_v52/test_jpx_direct_detail.py
       - run: python backtest_v52/inspect_ixbrl.py
+      - run: python backtest_v52/inspect_revision_row.py
