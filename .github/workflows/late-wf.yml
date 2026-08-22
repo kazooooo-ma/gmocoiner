@@ -1,0 +1,44 @@
+name: v52-late-walk-forward
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'research/v52_late_walkforward_prereg.json'
+      - 'backtest_v52/late_walkforward.py'
+      - '.github/workflows/late-wf.yml'
+permissions:
+  contents: read
+jobs:
+  late-wf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip pandas numpy requests beautifulsoup4 yfinance exchange_calendars
+      - name: Fetch 2021-12-30 JPX stock-list snapshot
+        run: |
+          git clone --depth 1 https://github.com/RonBeiden/jpx-stock-prediction.git external/jpx-list
+          ls -lh external/jpx-list/data/raw/train/stock_list.csv
+      - name: Build and freeze official-JPX fundamental table before price retrieval
+        run: |
+          python backtest_v52/late_walkforward.py fundamentals \
+            --stock-list external/jpx-list/data/raw/train/stock_list.csv \
+            --out-dir artifacts/v52-late-preprice
+          cat artifacts/v52-late-preprice/preprice_manifest.json
+      - name: Fetch prices only after pre-price table exists, then run fixed windows
+        run: |
+          test -s artifacts/v52-late-preprice/preprice_manifest.json
+          python backtest_v52/late_walkforward.py prices-run \
+            --pre-dir artifacts/v52-late-preprice \
+            --out-dir artifacts/v52-late-results
+      - name: Upload late walk-forward audit and results
+        uses: actions/upload-artifact@v4
+        with:
+          name: v52-late-walk-forward-results
+          path: artifacts/v52-late-*
+          if-no-files-found: error
+          retention-days: 30
