@@ -1,0 +1,52 @@
+{
+  "strategy_version": "v5.2-frozen-late-cohort",
+  "locked_at_jst": "2026-08-22T23:10:00+09:00",
+  "purpose": "Extend frozen v5.2 into post-2022 historical windows without changing alpha rules after seeing results.",
+  "universe": {
+    "source_snapshot": "JPX competition stock_list effective 2021-12-30",
+    "eligible": "NewMarketSegment == Prime Market and ordinary domestic equity",
+    "cohort_policy": "fixed cohort for all late windows; no later IPO additions; delisted/migrated names retained when data exists",
+    "benchmark_excluded": 1306
+  },
+  "windows": [
+    {"id": "WF-05", "base_close": "2022-06-30", "end": "2023-06-30"},
+    {"id": "WF-06", "base_close": "2023-06-30", "end": "2024-06-28"},
+    {"id": "WF-07", "base_close": "2024-06-28", "end": "2025-06-30"},
+    {"id": "WF-08", "base_close": "2025-06-30", "end": "2026-06-30"}
+  ],
+  "fundamental_source": "JPX listed-company service, official TDnet earnings iXBRL links",
+  "price_source": "Yahoo Finance via yfinance, fetched only after fundamental event table is produced; raw OHLCV, dividends and stock splits",
+  "benchmark": "1306.T total-return proxy from same price source",
+  "same_day_cutoff_policy": "Because the public issuer-detail page exposes disclosure date but not time, disclosures dated on a monthly checkpoint are conservatively excluded from that checkpoint and become usable next month. No same-day release is assumed pre-18:00.",
+  "parameters": {
+    "lookback_calendar_days": 45,
+    "up_revision_threshold": 0.05,
+    "up_revision_score": 3,
+    "profit_yoy_growth_threshold": 0.15,
+    "profit_growth_score": 2,
+    "dividend_growth_threshold": 0.10,
+    "dividend_growth_score": 1,
+    "down_revision_threshold": -0.05,
+    "down_revision_score": -4,
+    "profit_yoy_decline_threshold": -0.20,
+    "profit_decline_score": -2,
+    "fundamental_pass_score": 3,
+    "latest_profit_must_be_positive": true,
+    "average_trading_value_jpy_per_day": 300000000,
+    "minimum_trading_days_previous_month": 15,
+    "price_momentum_months": 2,
+    "absolute_momentum_must_be_positive": true,
+    "topix_proxy_excess_must_be_positive": true,
+    "slot_count": 12,
+    "sector_cap": 3,
+    "one_way_cost": 0.002,
+    "hold_calendar_months": 6,
+    "entry": "first available trading-day raw open after checkpoint",
+    "exit": "first available trading-day raw open at or after six calendar months; earlier only on fundamental break"
+  },
+  "ranking": ["score desc", "2m benchmark excess desc", "previous-month average trading value desc", "security code asc"],
+  "corporate_actions": "raw shares adjusted forward for stock splits; cash dividends added on ex-dividend/action date supplied by price source",
+  "missing_data": "No imputation from news/analyst sites. Missing official fundamentals => no score. Missing price => ineligible at that checkpoint and logged.",
+  "optimization_prohibited": true,
+  "formal_interpretation": "Retrospective fixed-rule walk-forward. These windows are not claimed as pristine human-knowledge OOS because they occur before the strategy was frozen in 2026; algorithmic rules and window boundaries are nevertheless pre-registered before computation."
+}
