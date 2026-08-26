@@ -10,8 +10,9 @@ import requests
 
 PDF_URL = "https://www.jpx.co.jp/markets/statistics-equities/price/aocfb40000004193-att/st_202307.pdf"
 EXPECTED = {"P": 1833, "S": 1439}
+ROW_START_RE = re.compile(r"^\s*2023/07\s+\d{4}\s+")
 ROW_RE = re.compile(r"^\s*2023/07\s+(\d{4})\s+(.+?)\s+普通株式\s+(.+)$")
-SECTION_RE = re.compile(r"\s(TPM|P|S|G)\s+(?:(?:貸借|信用|特|審|確|監|整)\s+)*100(?:\s|$)")
+SECTION_RE = re.compile(r"\s(TPM|P|S|G)(?:外)?\s+(?:(?:貸借|信用|特|審|確|監|整)\s+)*100(?:\s|$)")
 
 
 def download(url: str, path: Path) -> None:
@@ -24,10 +25,25 @@ def extract_layout(pdf: Path, txt: Path) -> None:
     subprocess.run(["pdftotext", "-layout", str(pdf), str(txt)], check=True)
 
 
+def logical_rows(text: str) -> list[str]:
+    out: list[str] = []
+    current: list[str] = []
+    for line in text.splitlines():
+        if ROW_START_RE.match(line):
+            if current:
+                out.append(" ".join(x.strip() for x in current if x.strip()))
+            current = [line]
+        elif current and line.strip():
+            current.append(line)
+    if current:
+        out.append(" ".join(x.strip() for x in current if x.strip()))
+    return out
+
+
 def parse_rows(text: str) -> list[dict[str, str]]:
     rows: dict[int, dict[str, str]] = {}
     diagnostics: list[str] = []
-    for raw in text.splitlines():
+    for raw in logical_rows(text):
         m = ROW_RE.match(raw)
         if not m:
             continue
@@ -36,11 +52,12 @@ def parse_rows(text: str) -> list[dict[str, str]]:
         rest = m.group(3)
         sec_matches = list(SECTION_RE.finditer(" " + rest))
         if len(sec_matches) != 1:
-            diagnostics.append(f"SECTION_PARSE[{code}] matches={len(sec_matches)} line={raw}")
+            diagnostics.append(f"SECTION_PARSE[{code}] matches={len(sec_matches)} line={raw[:500]}")
             continue
-        sec = sec_matches[0].group(1)
-        prefix = rest[: sec_matches[0].start()]
-        is_foreign = bool(re.search(r"(?:^|\s)外(?:\s|$)", prefix))
+        sm = sec_matches[0]
+        sec = sm.group(1)
+        token = sm.group(0)
+        is_foreign = "外" in token
         rows[code] = {"Code": str(code), "NameJP": name, "Section202307": sec, "ForeignFlag": "1" if is_foreign else "0", "Source": PDF_URL}
     if diagnostics:
         print("\n".join(diagnostics[:100]))
@@ -66,6 +83,7 @@ def main() -> None:
     counts = {s: sum(r["Section202307"] == s for r in pit) for s in ("P", "S")}
     with (args.out_dir / "v6_universe_20230731_candidate.csv").open("w", newline="", encoding="utf-8-sig") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys())); w.writeheader(); w.writerows(pit)
+    print("logical_rows", len(logical_rows(txt.read_text(encoding="utf-8", errors="replace"))))
     print("parsed_common_stocks", len(rows))
     print("candidate_prime", counts["P"], "expected", EXPECTED["P"])
     print("candidate_standard", counts["S"], "expected", EXPECTED["S"])
