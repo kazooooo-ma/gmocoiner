@@ -11,6 +11,7 @@ on:
       - 'backtest_v52/test_jpx_direct_detail.py'
       - 'backtest_v52/inspect_ixbrl.py'
       - 'backtest_v52/inspect_revision_row.py'
+      - 'backtest_v6/build_pit_universe.py'
       - '.github/workflows/inspect-jpx-company-search.yml'
 jobs:
   inspect:
@@ -27,3 +28,11 @@ jobs:
       - run: python backtest_v52/test_jpx_direct_detail.py
       - run: python backtest_v52/inspect_ixbrl.py
       - run: python backtest_v52/inspect_revision_row.py
+      - name: Build v6 PIT universe diagnostic
+        run: python backtest_v6/build_pit_universe.py --out-dir artifacts/v6-universe --allow-count-mismatch
+      - name: Upload v6 PIT universe diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: v6-pit-universe-diagnostics
+          path: artifacts/v6-universe
+          retention-days: 30
