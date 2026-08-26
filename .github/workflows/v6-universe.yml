@@ -1,0 +1,25 @@
+name: v6-pit-universe
+on:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  universe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install parser dependencies
+        run: |
+          python -m pip install --upgrade pip requests
+          pdftotext -v
+      - name: Build 2023-07-31 PIT universe candidate
+        run: |
+          python backtest_v6/build_pit_universe.py --out-dir artifacts/v6-universe --allow-count-mismatch
+      - name: Upload diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: v6-pit-universe-diagnostics
+          path: artifacts/v6-universe
+          retention-days: 30
