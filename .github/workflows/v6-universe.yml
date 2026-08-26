@@ -83,3 +83,32 @@ jobs:
           name: v6-frozen-fundamentals
           path: artifacts/v6-frozen
           retention-days: 30
+  portfolio:
+    needs: merge
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --upgrade pandas numpy requests python-dateutil
+      - uses: actions/download-artifact@v4
+        with:
+          name: v6-pit-universe-diagnostics
+          path: artifacts/v6-universe
+      - uses: actions/download-artifact@v4
+        with:
+          name: v6-frozen-fundamentals
+          path: artifacts/v6-frozen
+      - name: Run frozen price gate and portfolio simulation
+        run: |
+          python backtest_v6/run_price_backtest.py \
+            --fundamentals artifacts/v6-frozen/V6_Fundamentals.csv \
+            --universe artifacts/v6-universe/v6_universe_20230731_candidate.csv \
+            --out-dir artifacts/v6-result
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v6-backtest-result
+          path: artifacts/v6-result
+          retention-days: 30
