@@ -12,11 +12,12 @@ jobs:
           python-version: '3.11'
       - name: Install parser dependencies
         run: |
+          sudo apt-get update
+          sudo apt-get install -y poppler-utils
           python -m pip install --upgrade pip requests
           pdftotext -v
       - name: Build 2023-07-31 PIT universe candidate
-        run: |
-          python backtest_v6/build_pit_universe.py --out-dir artifacts/v6-universe --allow-count-mismatch
+        run: python backtest_v6/build_pit_universe.py --out-dir artifacts/v6-universe --allow-count-mismatch
       - name: Upload diagnostics
         uses: actions/upload-artifact@v4
         with:
