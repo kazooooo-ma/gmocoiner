@@ -1,0 +1,40 @@
+name: v51-cleaned-first-section-proxy
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'backtest_v51_proxy/run_first_section_cleaned_proxy.py'
+      - '.github/workflows/v51-cleaned-proxy.yml'
+permissions:
+  contents: read
+jobs:
+  proxy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip pandas numpy yfinance
+      - name: Fetch JPX competition history
+        run: |
+          GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 https://github.com/1on1pt/JPX_Tokyo_Stock_Exchange_Prediction.git external/jpx-full
+          git -C external/jpx-full lfs pull --include="train_files/stock_prices.csv,train_files/financials.csv"
+          git clone --depth 1 https://github.com/RonBeiden/jpx-stock-prediction.git external/jpx-list
+          mkdir -p external/jpx-data
+          cp external/jpx-full/train_files/stock_prices.csv external/jpx-data/stock_prices.csv
+          cp external/jpx-full/train_files/financials.csv external/jpx-data/financials.csv
+          cp external/jpx-list/data/raw/train/stock_list.csv external/jpx-data/stock_list.csv
+      - name: Append TOPIX ETF benchmark
+        run: python backtest_v52/fetch_benchmark.py --price-file external/jpx-data/stock_prices.csv
+      - name: Run cleaned v5.1 proxy
+        run: python backtest_v51_proxy/run_first_section_cleaned_proxy.py --data-dir external/jpx-data --out-dir artifacts/v51-cleaned-proxy
+      - name: Upload cleaned proxy result
+        uses: actions/upload-artifact@v4
+        with:
+          name: v51-cleaned-proxy-result
+          path: artifacts/v51-cleaned-proxy
+          if-no-files-found: error
+          retention-days: 30
