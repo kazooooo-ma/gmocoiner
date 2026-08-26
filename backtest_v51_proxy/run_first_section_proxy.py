@@ -32,6 +32,21 @@ def main() -> None:
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
     prices, fin, stock_list = load_data(args.data_dir)
+
+    # The benchmark provider can contain rows on dates on which TSE cash
+    # equities did not trade (notably the 2020-10-01 full-day outage).  Such a
+    # row must not create a portfolio valuation day with every stock missing.
+    # Keep only dates on which at least one non-benchmark JPX equity has a
+    # valid close.  This is a calendar/data-alignment repair, not a strategy
+    # rule change.
+    equity_market_dates = set(
+        prices.loc[
+            (prices["SecuritiesCode"] != BENCHMARK_CODE) & prices["AdjClose"].notna(),
+            "Date",
+        ]
+    )
+    prices = prices[prices["Date"].isin(equity_market_dates)].copy()
+
     stock_list = stock_list.copy()
     names = stock_list.set_index("SecuritiesCode")["Name"].fillna("").astype(str).to_dict()
     sectors = stock_list.set_index("SecuritiesCode")["33SectorName"].fillna("Unknown").astype(str).to_dict()
@@ -52,9 +67,23 @@ def main() -> None:
     fundamentals, decision_map = evaluate_fundamentals(fin, universe, checkpoints, names, sectors)
     signals = build_signals(prices, fundamentals, checkpoints, universe, names, sectors)
     nav, monthly, episodes, trades, metrics = simulate_portfolio(prices, signals, decision_map, names, sectors)
+
+    # A 12-name equal-weight portfolio should not jump by orders of magnitude
+    # in one day.  Fail closed if a residual missing-price/accounting defect
+    # creates an implausible daily NAV move.
+    extreme_nav_rows = nav[nav["DailyReturn"].abs() > 0.50]
+    nav_integrity_pass = extreme_nav_rows.empty
+    if not nav_integrity_pass:
+        extreme_nav_rows.to_csv(args.out_dir / "nav_integrity_failures.csv", index=False)
+        raise RuntimeError(
+            "NAV integrity check failed: daily portfolio move exceeded 50%; "
+            "inspect missing-price/accounting handling before using results."
+        )
+
     metrics.update({
         "proxy_name": "v5.1 first-section snapshot proxy",
         "formal_v51": False,
+        "nav_integrity_pass": nav_integrity_pass,
         "universe_count": len(universe),
         "checkpoint_count": len(checkpoints),
         "fundamental_evaluation_rows": len(fundamentals),
@@ -66,6 +95,7 @@ def main() -> None:
             "The public competition mirror can omit stocks delisted before its snapshot.",
             "This proxy uses the structured v5.2 fundamental score and therefore does not yet add v5.1 buyback, quantified capital-efficiency, and order/KPI points.",
             "1306 is an investable total-return proxy, not the official TOPIX total-return index.",
+            "Market-wide non-trading dates are removed using non-benchmark JPX equity closes; 2020-10-01 is therefore not treated as a valuation/trading day.",
         ],
     })
 
