@@ -92,7 +92,7 @@ def one(code,start,end,retries):
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument("--universe",type=Path,required=True); ap.add_argument("--out",type=Path,required=True)
     ap.add_argument("--start",default="2023-08-01"); ap.add_argument("--end",default="2024-07-31"); ap.add_argument("--workers",type=int,default=8); ap.add_argument("--retries",type=int,default=2)
-    ap.add_argument("--shard",type=int,default=0); ap.add_argument("--shards",type=int,default=1); ap.add_argument("--limit",type=int,default=0)
+    ap.add_argument("--shard",type=int,default=0); ap.add_argument("--shards",type=int,default=1); ap.add_argument("--limit",type=int,default=0); ap.add_argument("--allow-errors",action="store_true")
     args=ap.parse_args(); start=date.fromisoformat(args.start); end=date.fromisoformat(args.end)
     uni=pd.read_csv(args.universe); code_col="Code" if "Code" in uni.columns else "code"; all_codes=[int(x) for x in uni[code_col].dropna().astype(int)]
     codes=[c for i,c in enumerate(all_codes) if i%args.shards==args.shard]
@@ -112,5 +112,5 @@ def main():
     with err_path.open("w",newline="",encoding="utf-8-sig") as f:
         w=csv.DictWriter(f,fieldnames=["Code","Error"]); w.writeheader(); w.writerows(errors)
     print("codes",len(codes),"rows",len(all_rows),"errors",len(errors))
-    if errors: raise SystemExit("Disclosure ledger incomplete: errors must be resolved before V6 fundamentals are frozen.")
+    if errors and not args.allow_errors: raise SystemExit("Disclosure ledger incomplete: errors must be resolved before V6 fundamentals are frozen.")
 if __name__=="__main__": main()
