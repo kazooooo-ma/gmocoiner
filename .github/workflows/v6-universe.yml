@@ -103,7 +103,7 @@ jobs:
           path: artifacts/v6-frozen
       - name: Run frozen price gate and portfolio simulation
         run: |
-          python backtest_v6/run_price_backtest.py \
+          python backtest_v6/run_price_backtest_fixed.py \
             --fundamentals artifacts/v6-frozen/V6_Fundamentals.csv \
             --universe artifacts/v6-universe/v6_universe_20230731_candidate.csv \
             --out-dir artifacts/v6-result
