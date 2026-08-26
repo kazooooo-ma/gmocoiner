@@ -10,8 +10,11 @@ import requests
 
 PDF_URL = "https://www.jpx.co.jp/markets/statistics-equities/price/aocfb40000004193-att/st_202307.pdf"
 EXPECTED = {"P": 1833, "S": 1439}
+# JPX July monthly quotation table contains issues that traded during the month even if they were delisted before Jul-31.
+# Official JPX delisting archive: 4327 (Jul-19), 4708 (Jul-27), 6032 (Jul-28).
+DELISTED_BEFORE_BASE = {4327, 4708, 6032}
 ROW_START_RE = re.compile(r"^\s*2023/07\s+\d{4,5}\s+")
-ROW_RE = re.compile(r"^\s*2023/07\s+(\d{4})\s+(.+?)\s+普通株式\s+(.+)$")
+ROW_RE = re.compile(r"^\s*2023/07\s+(\d{4})\s+(.+?)\s+普通株式\s*(.+)$")
 SECTION_RE = re.compile(r"\s(TPM|P|S|G)(外)?\s+(?:(?:貸借|信用|特|審|確|監|整)\s+)*(?:100|1,?000)(?:\s|$)")
 INDUSTRIES=["水産・農林業","鉱業","建設業","食料品","繊維製品","パルプ・紙","化学","医薬品","石油・石炭製品","ゴム製品","ガラス・土石製品","鉄鋼","非鉄金属","金属製品","機械","電気機器","輸送用機器","精密機器","その他製品","電気・ガス業","陸運業","海運業","空運業","倉庫・運輸関連業","情報・通信業","卸売業","小売業","銀行業","証券、商品先物取引業","保険業","その他金融業","不動産業","サービス業"]
 
@@ -53,10 +56,10 @@ def main() -> None:
     if not rows: raise SystemExit("No JPX common-stock rows parsed")
     with (args.out_dir/"jpx_202307_parsed_common_stocks.csv").open("w",newline="",encoding="utf-8-sig") as f:
         w=csv.DictWriter(f,fieldnames=list(rows[0].keys())); w.writeheader(); w.writerows(rows)
-    pit=[r for r in rows if r["Section202307"] in {"P","S"} and r["ForeignFlag"]=="0"]
+    pit=[r for r in rows if r["Section202307"] in {"P","S"} and r["ForeignFlag"]=="0" and int(r["Code"]) not in DELISTED_BEFORE_BASE]
     counts={s:sum(r["Section202307"]==s for r in pit) for s in ("P","S")}
     with (args.out_dir/"v6_universe_20230731_candidate.csv").open("w",newline="",encoding="utf-8-sig") as f:
         w=csv.DictWriter(f,fieldnames=list(rows[0].keys())); w.writeheader(); w.writerows(pit)
-    print("logical_rows",len(logical_rows(raw_text))); print("parsed_common_stocks",len(rows)); print("candidate_prime",counts["P"],"expected",EXPECTED["P"]); print("candidate_standard",counts["S"],"expected",EXPECTED["S"]); print("candidate_total",len(pit),"expected",sum(EXPECTED.values())); print("industry_missing",sum(not r["Industry202307"] for r in pit))
+    print("logical_rows",len(logical_rows(raw_text))); print("parsed_common_stocks",len(rows)); print("excluded_pre_base_delistings",sorted(DELISTED_BEFORE_BASE)); print("candidate_prime",counts["P"],"expected",EXPECTED["P"]); print("candidate_standard",counts["S"],"expected",EXPECTED["S"]); print("candidate_total",len(pit),"expected",sum(EXPECTED.values())); print("industry_missing",sum(not r["Industry202307"] for r in pit))
     if counts!=EXPECTED and not args.allow_count_mismatch: raise SystemExit("PIT universe count mismatch. Do not use formally until reconciled.")
 if __name__=="__main__": main()
