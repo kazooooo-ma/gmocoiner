@@ -2,6 +2,9 @@ name: v6-pit-universe
 on:
   pull_request:
   workflow_dispatch:
+concurrency:
+  group: v6-pit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   universe:
     runs-on: ubuntu-latest
@@ -15,8 +18,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y poppler-utils
           python -m pip install --upgrade pip requests
-      - name: Build 2023-07-31 PIT universe candidate
-        run: python backtest_v6/build_pit_universe.py --out-dir artifacts/v6-universe --allow-count-mismatch
+      - name: Build exact 2023-07-31 PIT universe
+        run: python backtest_v6/build_pit_universe.py --out-dir artifacts/v6-universe
       - name: Upload universe
         uses: actions/upload-artifact@v4
         with:
