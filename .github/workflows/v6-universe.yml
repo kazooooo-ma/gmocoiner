@@ -45,13 +45,13 @@ jobs:
         with:
           name: v6-pit-universe-diagnostics
           path: artifacts/v6-universe
-      - name: Fetch all JPX historical disclosures for shard
+      - name: Fetch JPX history including pre-holdout state
         run: |
           mkdir -p artifacts/shard
           python backtest_v6/fetch_disclosures.py \
             --universe artifacts/v6-universe/v6_universe_20230731_candidate.csv \
             --out artifacts/shard/disclosures_${{ matrix.shard }}.csv \
-            --start 2023-08-01 --end 2024-07-31 \
+            --start 2022-04-01 --end 2024-07-31 \
             --shards 8 --shard ${{ matrix.shard }} --workers 4 --retries 2 --allow-errors
       - name: Freeze primary-source fundamental scores before price
         run: |
