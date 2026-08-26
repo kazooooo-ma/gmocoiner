@@ -36,3 +36,5 @@ for i,ff in enumerate(ds.find_all('form')):
     print('FORM',i,ff.get('method'),ff.get('action'))
     for x in ff.find_all(['input','select','button'])[:300]:
         print(' ',x.name,x.get('type'),x.get('name'),x.get('value'),x.attrs)
+# No logic change. This tracked path intentionally triggers the existing JPX audit,
+# which now includes the v6 2023-07 point-in-time universe diagnostic.
