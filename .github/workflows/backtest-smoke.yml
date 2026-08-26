@@ -4,6 +4,7 @@ on:
     branches: [master]
     paths:
       - 'backtest_v52/**'
+      - 'backtest_v51_proxy/**'
       - 'docs/v5_2_methodology_and_walk_forward_ja.md'
       - '.github/workflows/backtest-smoke.yml'
 permissions:
@@ -39,6 +40,9 @@ jobs:
       - name: Run reference holdout
         run: |
           python backtest_v52/run_wrapper.py --data-dir external/jpx-data --out-dir artifacts/v52
+      - name: Run v5.1 first-section snapshot proxy
+        run: |
+          python backtest_v51_proxy/run_first_section_proxy.py --data-dir external/jpx-data --out-dir artifacts/v51-first-section-proxy
       - name: Run pre-registered fixed-rule walk-forward windows
         run: |
           mkdir -p artifacts/walk-forward
@@ -53,6 +57,7 @@ jobs:
           name: backtest-v52-and-walk-forward-results
           path: |
             artifacts/v52
+            artifacts/v51-first-section-proxy
             artifacts/walk-forward
           if-no-files-found: error
           retention-days: 30
