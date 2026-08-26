@@ -58,7 +58,7 @@ jobs:
             --shards 8 --shard ${{ matrix.shard }} --workers 4 --retries 2 --allow-errors
       - name: Freeze primary-source fundamental scores before price
         run: |
-          python backtest_v6/score_core.py \
+          python backtest_v6/score_core_revision.py \
             --disclosures artifacts/shard/disclosures_${{ matrix.shard }}.csv \
             --out artifacts/shard/fundamentals_${{ matrix.shard }}.csv --workers 4
       - uses: actions/upload-artifact@v4
