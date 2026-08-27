@@ -1,8 +1,9 @@
 name: inspect-jpx-company-search
 on:
   pull_request:
-    branches: [master]
+    branches: [backtest-v52-20260822]
     paths:
+      - 'backtest_v6/**'
       - 'backtest_v52/inspect_jpx_company_search.sh'
       - 'backtest_v52/inspect_jpx_company_search_forms.py'
       - 'backtest_v52/inspect_jpx_www2.py'
@@ -11,28 +12,52 @@ on:
       - 'backtest_v52/test_jpx_direct_detail.py'
       - 'backtest_v52/inspect_ixbrl.py'
       - 'backtest_v52/inspect_revision_row.py'
-      - 'backtest_v6/build_pit_universe.py'
       - '.github/workflows/inspect-jpx-company-search.yml'
 jobs:
   inspect:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: read
     steps:
       - uses: actions/checkout@v4
-      - run: python -m pip install beautifulsoup4 requests
-      - run: bash backtest_v52/inspect_jpx_company_search.sh
-      - run: python backtest_v52/inspect_jpx_company_search_forms.py
-      - run: python backtest_v52/inspect_jpx_www2.py
-      - run: python backtest_v52/test_jpx_search.py
-      - run: python backtest_v52/test_jpx_detail.py
-      - run: python backtest_v52/test_jpx_direct_detail.py
-      - run: python backtest_v52/inspect_ixbrl.py
-      - run: python backtest_v52/inspect_revision_row.py
-      - name: Build v6 PIT universe diagnostic
-        run: python backtest_v6/build_pit_universe.py --out-dir artifacts/v6-universe --allow-count-mismatch
-      - name: Upload v6 PIT universe diagnostic
+      - name: Cancel obsolete V6 executions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KEEP_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python - <<'PY'
+          import os, requests
+          repo=os.environ['GITHUB_REPOSITORY'];keep=os.environ['KEEP_SHA'];token=os.environ['GH_TOKEN']
+          h={'Authorization':f'Bearer {token}','Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}
+          base=f'https://api.github.com/repos/{repo}'
+          for status in ('queued','in_progress'):
+              u=f'{base}/actions/workflows/v6-universe.yml/runs?branch=v6-audit-20260827&status={status}&per_page=100'
+              data=requests.get(u,headers=h,timeout=30).json()
+              for r in data.get('workflow_runs',[]):
+                  if r.get('head_sha')==keep: continue
+                  rid=r['id']
+                  resp=requests.post(f'{base}/actions/runs/{rid}/cancel',headers=h,timeout=30)
+                  print('cancel',rid,r.get('head_sha'),resp.status_code)
+          PY
+      - run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      - run: python -m pip install --upgrade beautifulsoup4 requests pandas numpy
+      - name: Build exact V6 PIT universe
+        run: python backtest_v6/build_pit_universe.py --out-dir artifacts/v6-universe
+      - name: Smoke-test direct JPX historical ledger
+        run: |
+          python backtest_v6/fetch_disclosures.py \
+            --universe artifacts/v6-universe/v6_universe_20230731_candidate.csv \
+            --out artifacts/v6-universe/smoke_disclosures.csv \
+            --start 2023-08-01 --end 2024-07-31 --limit 5 --workers 2 --retries 1
+      - name: Basic JPX company service inspection
+        run: python backtest_v52/test_jpx_direct_detail.py
+      - name: Upload V6 universe audit
         uses: actions/upload-artifact@v4
         with:
-          name: v6-pit-universe-diagnostics
+          name: v6-universe-audit
           path: artifacts/v6-universe
+          if-no-files-found: error
           retention-days: 30

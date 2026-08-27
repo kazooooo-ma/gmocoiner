@@ -8,87 +8,58 @@ from pathlib import Path
 
 import requests
 
-PDF_URL = "https://www.jpx.co.jp/english/markets/statistics-equities/price/p6b22i0000003uar-att/st_202307.pdf"
+PDF_URL = "https://www.jpx.co.jp/markets/statistics-equities/price/aocfb40000004193-att/st_202307.pdf"
 EXPECTED = {"P": 1833, "S": 1439}
-ROW_RE = re.compile(r"^\s*2023/07\s+(\d{4})\s+(.+?)\s+普通株式\s+(.+)$")
-SECTION_RE = re.compile(r"\s(TPM|P|S|G)\s+(?:(?:貸借|信用|特|審|確|監|整)\s+)*100(?:\s|$)")
-
+# JPX July monthly quotation table contains issues that traded during the month even if they were delisted before Jul-31.
+# Official JPX delisting archive: 4327 (Jul-19), 4708 (Jul-27), 6032 (Jul-28).
+DELISTED_BEFORE_BASE = {4327, 4708, 6032}
+ROW_START_RE = re.compile(r"^\s*2023/07\s+\d{4,5}\s+")
+ROW_RE = re.compile(r"^\s*2023/07\s+(\d{4})\s+(.+?)\s+普通株式\s*(.+)$")
+SECTION_RE = re.compile(r"\s(TPM|P|S|G)(外)?\s+(?:(?:貸借|信用|特|審|確|監|整)\s+)*(?:100|1,?000)(?:\s|$)")
+INDUSTRIES=["水産・農林業","鉱業","建設業","食料品","繊維製品","パルプ・紙","化学","医薬品","石油・石炭製品","ゴム製品","ガラス・土石製品","鉄鋼","非鉄金属","金属製品","機械","電気機器","輸送用機器","精密機器","その他製品","電気・ガス業","陸運業","海運業","空運業","倉庫・運輸関連業","情報・通信業","卸売業","小売業","銀行業","証券、商品先物取引業","保険業","その他金融業","不動産業","サービス業"]
 
 def download(url: str, path: Path) -> None:
-    r = requests.get(url, timeout=90, headers={"User-Agent": "Mozilla/5.0"})
-    r.raise_for_status()
-    path.write_bytes(r.content)
-
+    r = requests.get(url, timeout=90, headers={"User-Agent": "Mozilla/5.0"}); r.raise_for_status(); path.write_bytes(r.content)
 
 def extract_layout(pdf: Path, txt: Path) -> None:
     subprocess.run(["pdftotext", "-layout", str(pdf), str(txt)], check=True)
 
+def logical_rows(text: str) -> list[str]:
+    out=[]; current=[]
+    for line in text.splitlines():
+        if ROW_START_RE.match(line):
+            if current: out.append(" ".join(x.strip() for x in current if x.strip()))
+            current=[line]
+        elif current and line.strip(): current.append(line)
+    if current: out.append(" ".join(x.strip() for x in current if x.strip()))
+    return out
 
 def parse_rows(text: str) -> list[dict[str, str]]:
-    rows: dict[int, dict[str, str]] = {}
-    diagnostics: list[str] = []
-    for raw in text.splitlines():
-        m = ROW_RE.match(raw)
-        if not m:
-            continue
-        code = int(m.group(1))
-        name = m.group(2).strip()
-        rest = m.group(3)
-        sec_matches = list(SECTION_RE.finditer(" " + rest))
-        if len(sec_matches) != 1:
-            diagnostics.append(f"SECTION_PARSE[{code}] matches={len(sec_matches)} line={raw}")
-            continue
-        sec = sec_matches[0].group(1)
-        prefix = rest[: sec_matches[0].start()]
-        # Attribute '外' marks a foreign stock.  V6 is domestic common stocks only.
-        is_foreign = bool(re.search(r"(?:^|\s)外(?:\s|$)", prefix))
-        rows[code] = {
-            "Code": str(code),
-            "NameJP": name,
-            "Section202307": sec,
-            "ForeignFlag": "1" if is_foreign else "0",
-            "Source": PDF_URL,
-        }
-    if diagnostics:
-        print("\n".join(diagnostics[:100]))
+    rows={}; diagnostics=[]
+    for raw in logical_rows(text):
+        m=ROW_RE.match(raw)
+        if not m: continue
+        code=int(m.group(1)); name=m.group(2).strip(); rest=m.group(3)
+        sec_matches=list(SECTION_RE.finditer(" "+rest))
+        if len(sec_matches)!=1:
+            diagnostics.append(f"SECTION_PARSE[{code}] matches={len(sec_matches)} line={raw[:500]}"); continue
+        sm=sec_matches[0]; sec=sm.group(1); is_foreign=bool(sm.group(2)); prefix=(" "+rest)[:sm.start()]
+        industry=next((x for x in INDUSTRIES if x in prefix),"")
+        rows[code]={"Code":str(code),"NameJP":name,"Industry202307":industry,"Section202307":sec,"ForeignFlag":"1" if is_foreign else "0","Source":PDF_URL}
+    if diagnostics: print("\n".join(diagnostics[:100]))
     return [rows[k] for k in sorted(rows)]
 
-
 def main() -> None:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--out-dir", type=Path, required=True)
-    ap.add_argument("--allow-count-mismatch", action="store_true")
-    args = ap.parse_args()
-    args.out_dir.mkdir(parents=True, exist_ok=True)
-
-    pdf = args.out_dir / "st_202307.pdf"
-    txt = args.out_dir / "st_202307_layout.txt"
-    download(PDF_URL, pdf)
-    extract_layout(pdf, txt)
-    rows = parse_rows(txt.read_text(encoding="utf-8", errors="replace"))
-
-    all_csv = args.out_dir / "jpx_202307_parsed_common_stocks.csv"
-    with all_csv.open("w", newline="", encoding="utf-8-sig") as f:
-        w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
-        w.writeheader(); w.writerows(rows)
-
-    pit = [r for r in rows if r["Section202307"] in {"P", "S"} and r["ForeignFlag"] == "0"]
-    counts = {s: sum(r["Section202307"] == s for r in pit) for s in ("P", "S")}
-    out = args.out_dir / "v6_universe_20230731_candidate.csv"
-    with out.open("w", newline="", encoding="utf-8-sig") as f:
-        w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
-        w.writeheader(); w.writerows(pit)
-
-    print("parsed_common_stocks", len(rows))
-    print("candidate_prime", counts["P"], "expected", EXPECTED["P"])
-    print("candidate_standard", counts["S"], "expected", EXPECTED["S"])
-    print("candidate_total", len(pit), "expected", sum(EXPECTED.values()))
-    if counts != EXPECTED and not args.allow_count_mismatch:
-        raise SystemExit(
-            "PIT universe count mismatch. Do not use this candidate universe formally; "
-            "reconcile July delistings/listings/foreign attributes until the official JPX counts match."
-        )
-
-
-if __name__ == "__main__":
-    main()
+    ap=argparse.ArgumentParser(); ap.add_argument("--out-dir",type=Path,required=True); ap.add_argument("--allow-count-mismatch",action="store_true"); args=ap.parse_args()
+    args.out_dir.mkdir(parents=True,exist_ok=True); pdf=args.out_dir/"st_202307.pdf"; txt=args.out_dir/"st_202307_layout.txt"; download(PDF_URL,pdf); extract_layout(pdf,txt); raw_text=txt.read_text(encoding="utf-8",errors="replace")
+    rows=parse_rows(raw_text)
+    if not rows: raise SystemExit("No JPX common-stock rows parsed")
+    with (args.out_dir/"jpx_202307_parsed_common_stocks.csv").open("w",newline="",encoding="utf-8-sig") as f:
+        w=csv.DictWriter(f,fieldnames=list(rows[0].keys())); w.writeheader(); w.writerows(rows)
+    pit=[r for r in rows if r["Section202307"] in {"P","S"} and r["ForeignFlag"]=="0" and int(r["Code"]) not in DELISTED_BEFORE_BASE]
+    counts={s:sum(r["Section202307"]==s for r in pit) for s in ("P","S")}
+    with (args.out_dir/"v6_universe_20230731_candidate.csv").open("w",newline="",encoding="utf-8-sig") as f:
+        w=csv.DictWriter(f,fieldnames=list(rows[0].keys())); w.writeheader(); w.writerows(pit)
+    print("logical_rows",len(logical_rows(raw_text))); print("parsed_common_stocks",len(rows)); print("excluded_pre_base_delistings",sorted(DELISTED_BEFORE_BASE)); print("candidate_prime",counts["P"],"expected",EXPECTED["P"]); print("candidate_standard",counts["S"],"expected",EXPECTED["S"]); print("candidate_total",len(pit),"expected",sum(EXPECTED.values())); print("industry_missing",sum(not r["Industry202307"] for r in pit))
+    if counts!=EXPECTED and not args.allow_count_mismatch: raise SystemExit("PIT universe count mismatch. Do not use formally until reconciled.")
+if __name__=="__main__": main()
