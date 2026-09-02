@@ -1,0 +1,113 @@
+{
+  "ff5": {
+    "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/Japan_5_Factors_CSV.zip",
+    "sha256": "b1125375acccb00acb9b65c150bab36945895073e23b5d4ccc9ebf08582aa3b1",
+    "bytes": 6953,
+    "first": "1990-07",
+    "last": "2026-07",
+    "columns": [
+      "Mkt-RF",
+      "SMB",
+      "HML",
+      "RMW",
+      "CMA",
+      "RF"
+    ]
+  },
+  "momf": {
+    "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/Japan_Mom_Factor_CSV.zip",
+    "sha256": "e0704674478ecfdd04cb000d42aed2705b1f71e83364a25b995fc6c8b78d7b97",
+    "bytes": 2246,
+    "first": "1990-11",
+    "last": "2026-07",
+    "columns": [
+      "WML"
+    ]
+  },
+  "bm": {
+    "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/Japan_6_Portfolios_ME_BE-ME_CSV.zip",
+    "sha256": "1f157154ffe5707838859cc16b5c734efab106f93cf3ae79b78fccd279da438c",
+    "bytes": 27570,
+    "first": "1990-07",
+    "last": "2026-07",
+    "columns": [
+      "SMALL LoBM",
+      "ME1 BM2",
+      "SMALL HiBM",
+      "BIG LoBM",
+      "ME2 BM2",
+      "BIG HiBM"
+    ]
+  },
+  "op": {
+    "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/Japan_6_Portfolios_ME_OP_CSV.zip",
+    "sha256": "d3a508ec08fc6db3698aa9b55a45498455adb3d92eab550a1790abe2497cb4e7",
+    "bytes": 27438,
+    "first": "1990-07",
+    "last": "2026-07",
+    "columns": [
+      "SMALL LoOP",
+      "ME1 OP2",
+      "SMALL HiOP",
+      "BIG LoOP",
+      "ME2 OP2",
+      "BIG HiOP"
+    ]
+  },
+  "mom": {
+    "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/Japan_6_Portfolios_ME_Prior_12_2_CSV.zip",
+    "sha256": "7e32553b51eec5e41ed281351ce2eecd1bf6bd1fc0d2ce6695be2594b48395e8",
+    "bytes": 29321,
+    "first": "1990-11",
+    "last": "2026-07",
+    "columns": [
+      "SMALL LoPRIOR",
+      "ME1 PRIOR2",
+      "SMALL HiPRIOR",
+      "BIG LoPRIOR",
+      "ME2 PRIOR2",
+      "BIG HiPRIOR"
+    ]
+  },
+  "grid": {
+    "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/Japan_32_Portfolios_ME_BE-ME_OP_2x4x4_CSV.zip",
+    "sha256": "1dd15843c63bf05261f89d18cd91a685c63347fa1a7e988d226a48efa44837fd",
+    "bytes": 120277,
+    "first": "1990-07",
+    "last": "2026-07",
+    "columns": [
+      "SMALL LoBM LoOP",
+      "ME1 BM1 OP2",
+      "ME1 BM1 OP3",
+      "ME1 BM1 HiOP",
+      "ME1 BM2 LoOP",
+      "ME1 BM2 OP2",
+      "ME1 BM2 OP3",
+      "ME1 BM2 HiOP",
+      "ME1 BM3 LoOP",
+      "ME1 BM3 OP2",
+      "ME1 BM3 OP3",
+      "ME1 BM3 HiOP",
+      "ME1 BM4 LoOP",
+      "ME1 BM4 OP2",
+      "ME1 BM4 OP3",
+      "SMALL HiBM HiOP",
+      "BIG LoBM LoOP",
+      "ME2 BM1 OP2",
+      "ME2 BM1 OP3",
+      "ME2 BM1 HiOP",
+      "ME2 BM2 LoOP",
+      "ME2 BM2 OP2",
+      "ME2 BM2 OP3",
+      "ME2 BM2 HiOP",
+      "ME2 BM3 LoOP",
+      "ME2 BM3 OP2",
+      "ME2 BM3 OP3",
+      "ME2 BM3 HiOP",
+      "ME2 BM4 LoOP",
+      "ME2 BM4 OP2",
+      "ME2 BM4 OP3",
+      "BIG HiBM HiOP"
+    ]
+  }
+}

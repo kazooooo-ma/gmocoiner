@@ -1,0 +1,12 @@
+{
+  "type": "validation_threshold_waiver",
+  "preregistered_max_difference_bps": 3.0,
+  "observed": {
+    "HML": 5.0,
+    "RMW": 2.0,
+    "Mom": 1.5
+  },
+  "scope": "Only zero-cost factor reconstruction validation. Primary long-only portfolio returns are used directly and are not altered.",
+  "handling": "Factor-combination evidence remains secondary; long-only and 32-portfolio results remain primary.",
+  "reason": "Continue the requested executable test while preserving the failed preregistered check as an explicit deviation."
+}

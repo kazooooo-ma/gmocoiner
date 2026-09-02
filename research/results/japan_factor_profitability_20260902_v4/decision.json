@@ -1,0 +1,43 @@
+{
+  "verdict": "REJECT_PROFITABILITY_INCREMENT",
+  "big_only": {
+    "period": "primary",
+    "comparison": "big_only_add_p",
+    "start": "2015-07",
+    "end": "2026-06",
+    "months": 132,
+    "with_p_cagr": 0.09178871878031791,
+    "without_p_cagr": 0.09778415589475453,
+    "cagr_diff": -0.005995437114436619,
+    "ann_mean_diff": -0.006186363636363644,
+    "hac_t_diff": -0.8832184170937512,
+    "bootstrap_lo": -0.020067234848484872,
+    "bootstrap_hi": 0.0069759469696969705,
+    "bootstrap_prob_positive": 0.1882,
+    "with_p_max_dd": -0.26072414841644287,
+    "without_p_max_dd": -0.23430280050768093
+  },
+  "big_grid": {
+    "period": "primary",
+    "comparison": "big_grid_add_p",
+    "start": "2015-07",
+    "end": "2026-06",
+    "months": 132,
+    "with_p_cagr": 0.08730385277567776,
+    "without_p_cagr": 0.08895827251592614,
+    "cagr_diff": -0.0016544197402483807,
+    "ann_mean_diff": -0.002449999999999999,
+    "hac_t_diff": -0.38617425402366545,
+    "bootstrap_lo": -0.014437130681818185,
+    "bootstrap_hi": 0.007741922348484852,
+    "bootstrap_prob_positive": 0.3414,
+    "with_p_max_dd": -0.24056434153292172,
+    "without_p_max_dd": -0.24650672426099662
+  },
+  "double_cost_big_only_cagr_diff": 0.0019510443725150317,
+  "reconstruction_bps": {
+    "HML": 1.999999999999988,
+    "RMW": 34.00000000000002,
+    "Mom": 1.500000000000043
+  }
+}
