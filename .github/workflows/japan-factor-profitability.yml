@@ -25,7 +25,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          cache: pip
 
       - name: Install pinned analysis dependencies
         run: |
@@ -51,11 +50,13 @@ jobs:
           OUTPUT_DIR: factor_backtest_output
         run: python research/japan_factor_incremental_backtest.py
 
-      - name: Preserve executed implementation
+      - name: Preserve executed implementation and preregistration
         if: always()
         run: |
           mkdir -p factor_backtest_output
-          cp research/japan_factor_incremental_backtest.py factor_backtest_output/executed_backtest.py
+          if test -f research/japan_factor_incremental_backtest.py; then
+            cp research/japan_factor_incremental_backtest.py factor_backtest_output/executed_backtest.py
+          fi
           cp research/japan_factor_profitability_prereg.json factor_backtest_output/preregistration.json
 
       - name: Upload complete research output
