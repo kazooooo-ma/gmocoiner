@@ -1,0 +1,80 @@
+{
+  "research_id": "R-20260902-JP-FF-VMP-INCREMENTAL",
+  "locked_at_jst": "2026-09-02T08:45:00+09:00",
+  "purpose": "Test whether operating profitability adds economically meaningful and statistically defensible value to Japanese value-plus-momentum portfolios using directly downloaded monthly portfolio returns.",
+  "source": {
+    "provider": "Kenneth French Data Library",
+    "official_base_url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/",
+    "datasets": [
+      "Japan_5_Factors_CSV.zip",
+      "Japan_Mom_Factor_CSV.zip",
+      "Japan_6_Portfolios_ME_BE-ME_CSV.zip",
+      "Japan_6_Portfolios_ME_OP_CSV.zip",
+      "Japan_6_Portfolios_ME_Prior_12_2_CSV.zip",
+      "Japan_32_Portfolios_ME_BE-ME_OP_2x4x4_CSV.zip"
+    ],
+    "currency": "USD",
+    "return_type": "total return including dividends and capital gains"
+  },
+  "primary_period": {
+    "start": "2015-07",
+    "end": "2026-06",
+    "interpretation": "Post Fama-French five-factor formalization; not claimed as pristine OOS because profitability evidence predates 2015 and the library reconstructs history."
+  },
+  "secondary_periods": [
+    {"id": "full", "start": "1990-12", "end": "2026-06"},
+    {"id": "post_2016", "start": "2016-01", "end": "2026-06"},
+    {"id": "pre_2015", "start": "1990-12", "end": "2015-06"},
+    {"id": "recent_2020_plus", "start": "2020-01", "end": "2026-06"}
+  ],
+  "primary_hypothesis": "Adding operating profitability to Japanese value-plus-momentum improves net CAGR and information ratio versus the Japanese market in the primary period.",
+  "strongest_counter_hypothesis": "Operating profitability is redundant, dilutes recent value and momentum returns, or only appears useful because size-balanced portfolios allocate 50% to small stocks.",
+  "fixed_strategies": {
+    "long_only": [
+      "Value",
+      "Profitability",
+      "Momentum",
+      "Value+Momentum",
+      "Value+Profitability",
+      "Profitability+Momentum",
+      "Value+Profitability+Momentum"
+    ],
+    "implementations": [
+      "size-balanced: 50% small high-characteristic and 50% big high-characteristic",
+      "big-only: big high-characteristic portfolio",
+      "32-portfolio B/M x OP sleeves and high-B/M/high-OP intersection"
+    ],
+    "zero_cost_factor_checks": [
+      "equal-weight HML+Mom versus HML+RMW+Mom",
+      "60-month trailing inverse-vol HML+Mom versus HML+RMW+Mom, weights lagged one month"
+    ]
+  },
+  "cost_scenarios": {
+    "gross": "no haircut",
+    "base": "20 bps at July annual reconstitution for value/profitability sleeves and 20 bps per month for momentum sleeves",
+    "stress": "double the base haircut",
+    "caveat": "These are fixed execution haircuts, not measured portfolio turnover costs."
+  },
+  "primary_metrics": [
+    "CAGR",
+    "excess CAGR versus market",
+    "Sharpe versus RF",
+    "information ratio",
+    "maximum drawdown",
+    "HAC t-stat of monthly excess",
+    "12-month circular block-bootstrap confidence interval",
+    "break-even constant monthly cost"
+  ],
+  "decision_rule": {
+    "promote_profitability": "Profitability-added big-only or big 32-portfolio strategy has positive excess CAGR versus the corresponding value+momentum strategy, positive HAC point estimate, bootstrap probability of positive annual mean difference >= 0.80, and remains positive under double haircut.",
+    "reject_increment": "Profitability-added big-only and big 32-portfolio implementations both have non-positive CAGR difference and bootstrap probability <= 0.50 in the primary period.",
+    "otherwise": "WATCH; use direct J-Quants security-level PIT test before production judgment."
+  },
+  "anti_leakage": [
+    "No parameter optimization after reading results.",
+    "Use provider-defined annual B/M and OP formation and monthly momentum formation.",
+    "Reconstruct HML, RMW, and Mom from six portfolios and fail if the maximum discrepancy exceeds 3 bps.",
+    "All rolling inverse-vol weights use only the prior 60 months and are shifted by one month.",
+    "Record raw ZIP SHA-256 hashes and fetch metadata."
+  ]
+}
