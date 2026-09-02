@@ -1,0 +1,4 @@
+workflow_run_id=33604608099
+workflow_attempt=1
+commit=247f4fcd0c39cb32a911950f90a30e7ba7563aee
+ref=refs/heads/research/japan-factor-profitability-20260902
