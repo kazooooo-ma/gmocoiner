@@ -3,9 +3,9 @@ name: Japan factor profitability backtest
 on:
   push:
     branches:
-      - research/japan-factor-profitability-20260902
+      - research/japan-factor-profitability-20260902-r2
     paths:
-      - research/japan_factor_incremental_backtest.py.gz.b64
+      - research/japan_factor_incremental_backtest_r2.py.gz.b64
       - research/japan_factor_profitability_prereg.json
       - .github/workflows/japan-factor-profitability.yml
   workflow_dispatch:
@@ -37,15 +37,15 @@ jobs:
             matplotlib==3.10.6 \
             tabulate==0.9.0
 
-      - name: Restore and verify frozen implementation
+      - name: Restore and verify corrected implementation
         run: |
-          base64 --decode research/japan_factor_incremental_backtest.py.gz.b64 \
+          base64 --decode research/japan_factor_incremental_backtest_r2.py.gz.b64 \
             | gzip --decompress > research/japan_factor_incremental_backtest.py
-          echo 'b8a7cd96964d6d275eab9d6ad711ad99915bd9c3309f0d065c03bdb944d09d69  research/japan_factor_incremental_backtest.py' \
+          echo 'f6657d2b3df80eea17cdf9dd81a85ec855f2974f8092f3f830496ce441de1416  research/japan_factor_incremental_backtest.py' \
             | sha256sum --check --strict
           python -m py_compile research/japan_factor_incremental_backtest.py
 
-      - name: Download official data and run frozen backtest
+      - name: Download official data and run preregistered backtest
         env:
           OUTPUT_DIR: factor_backtest_output
         run: python research/japan_factor_incremental_backtest.py
@@ -63,7 +63,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: japan-factor-profitability-backtest
+          name: japan-factor-profitability-backtest-r2
           path: factor_backtest_output/
           if-no-files-found: error
           retention-days: 30
