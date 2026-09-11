@@ -1,0 +1,61 @@
+name: Anthropic public history branch probe
+on:
+  push:
+    branches: [feature/probe-anthropic-public-history-20260911]
+    paths:
+      - experiments/anthropic-public-history/**
+      - .github/workflows/anthropic-public-history.yml
+permissions:
+  contents: read
+concurrency:
+  group: anthropic-public-history-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  collect:
+    if: github.repository == 'kazooooo-ma/gmocoiner'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        venue: [lighter, variational]
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            experiments/anthropic-public-history
+            .github/workflows/anthropic-public-history.yml
+          sparse-checkout-cone-mode: false
+      - name: Offline tests
+        run: python3 -m unittest discover -s experiments/anthropic-public-history -v
+      - name: One-day smoke test
+        id: smoke
+        continue-on-error: true
+        env:
+          VENUE: ${{ matrix.venue }}
+        run: python3 experiments/anthropic-public-history/probe_anthropic.py --venue "$VENUE" --days 1 --lighter-time-unit s --out output/smoke
+      - name: Thirty-day backfill of validated streams
+        id: backfill
+        if: ${{ !cancelled() && hashFiles('output/smoke/summary.json') != '' }}
+        continue-on-error: true
+        env:
+          VENUE: ${{ matrix.venue }}
+        run: python3 experiments/anthropic-public-history/probe_anthropic.py --venue "$VENUE" --days 30 --lighter-time-unit s --eligible-from output/smoke/summary.json --out output/backfill
+      - name: Save allowlisted market-data JSON
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: anthropic-public-${{ matrix.venue }}-${{ github.run_id }}
+          path: output/**/*.json
+          if-no-files-found: error
+          retention-days: 7
+          include-hidden-files: false
+      - name: Preserve incomplete-collection failure
+        if: ${{ always() }}
+        env:
+          SMOKE: ${{ steps.smoke.outcome }}
+          BACKFILL: ${{ steps.backfill.outcome }}
+        run: |
+          test "$SMOKE" = success
+          test "$BACKFILL" = success
