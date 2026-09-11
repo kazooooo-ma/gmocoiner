@@ -266,6 +266,12 @@ class Collector:
                     params = {'market_id': market_id, 'resolution': '1h',
                               'start_timestamp': a * self.multiplier, 'end_timestamp': b * self.multiplier,
                               'count_back': (b - a) // 3600}
+                    if stream == 'lighter-funding':
+                        # The live API omitted the exact start boundary. Request
+                        # one prior hour, then retain actual rows in [start,end).
+                        # This is overlap retrieval, never timestamp shifting or imputation.
+                        params['start_timestamp'] = (a - 3600) * self.multiplier
+                        params['count_back'] += 1
                     if stream == 'lighter-trade':
                         params['set_timestamp_to_end'] = 'false'
                 data = self.get(stream, params)
